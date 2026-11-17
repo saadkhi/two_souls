@@ -1,0 +1,3 @@
+export default function ReviewWall({ reviews = [] }) {
+  return <section className="px-6 py-20 lg:px-16"><p className="text-center text-xs uppercase tracking-widest">From our customers</p><h2 className="mt-3 text-center font-heading text-4xl">Words that linger</h2><div className="mx-auto mt-10 grid max-w-6xl gap-8 md:grid-cols-3">{reviews.map(review => <article key={review.id} className="border border-border p-7"><p aria-label={`${review.rating} out of 5 stars`}>{'★'.repeat(Math.max(0, Math.min(5, review.rating || 0)))}</p><h3 className="mt-4 font-heading text-xl">{review.title}</h3><p className="mt-3 text-sm text-muted-foreground">{review.body}</p><p className="mt-5 text-xs">{review.customerName} · {review.productName}</p></article>)}</div></section>;
+}

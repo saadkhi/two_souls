@@ -1,0 +1,19 @@
+# Vercel builds these from source or does not need them at runtime.
+.git/
+.codex/
+.vercel/
+node_modules/
+dist/
+dist-ssr/
+.output/
+.vite/
+exports/
+reusable/
+
+# Local credentials, logs, archives, and creator-only tooling output.
+.env
+.env.*
+!.env.example
+*.log
+*.zip
+*.tar.gz
