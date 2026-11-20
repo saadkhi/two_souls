@@ -2,6 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { access, readFile, readdir } from 'node:fs/promises';
 import { extname, join } from 'node:path';
+import { fileURLToPath } from 'node:url';
 import { getTransformedRoutes } from '@vercel/routing-utils';
 import { routeSegments } from '../api/index.js';
 import { actionInternals } from '../server/actions.js';
@@ -139,7 +140,7 @@ test('legacy SDK, proxy settings and platform configuration are absent', async (
   await assert.rejects(access(new URL('../.openai/hosting.json', import.meta.url)));
 
   const textExtensions = new Set(['.css', '.html', '.js', '.jsx', '.json', '.jsonc', '.md', '.mjs', '.sql', '.txt', '.yaml', '.yml']);
-  for (const file of await sourceFiles(new URL('..', import.meta.url).pathname)) {
+  for (const file of await sourceFiles(fileURLToPath(new URL('..', import.meta.url)))) {
     if (!textExtensions.has(extname(file)) && !['.env.example', '.gitignore', '.vercelignore'].some(name => file.endsWith(name))) continue;
     const text = await readFile(file, 'utf8');
     assert.ok(!text.toLowerCase().includes(removedPlatform), `Legacy identifier remains in ${file}`);

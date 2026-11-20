@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import { readdir, readFile, stat } from 'node:fs/promises';
-import { resolve, relative } from 'node:path';
+import { resolve, relative, sep } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const root = fileURLToPath(new URL('..', import.meta.url));
@@ -46,6 +46,6 @@ for (const file of outputFiles) {
   total += (await stat(file)).size;
 }
 
-const catalogCount = publicFiles.filter(file => file.includes(`${resolve(root, 'public', 'catalog')}/`)).length;
+const catalogCount = publicFiles.filter(file => file.startsWith(resolve(root, 'public', 'catalog') + sep)).length;
 assert.ok(catalogCount >= 10, 'Localized catalog assets are incomplete');
 console.log(`Deployment build verified: ${outputFiles.length} files, ${(total / 1024 / 1024).toFixed(2)} MiB; all ${publicFiles.length} public assets preserved byte-for-byte.`);
