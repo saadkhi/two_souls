@@ -17,6 +17,8 @@ export default function Home() {
   const close = useRef(null);
   const filmDialog = useRef(null);
   useEffect(() => { const mq=window.matchMedia('(prefers-reduced-motion: reduce)');const update=()=>{setReduced(mq.matches);if(mq.matches)setPaused(true);};update();mq.addEventListener('change',update);return()=>mq.removeEventListener('change',update); }, []);
+  // Browser chrome (Android's address bar, older Safari) follows theme-color; match the page.
+  useEffect(()=>{const meta=document.createElement('meta');meta.name='theme-color';meta.content='#101a14';document.head.appendChild(meta);return()=>meta.remove();},[]);
   useEffect(()=>{if(!film)return;const previous=document.activeElement;document.body.style.overflow='hidden';close.current?.focus();const key=e=>{if(e.key==='Escape')setFilm(false);if(e.key==='Tab'){const items=[...filmDialog.current.querySelectorAll('button, a, video')];const first=items[0],last=items.at(-1);if(e.shiftKey&&document.activeElement===first){e.preventDefault();last.focus();}else if(!e.shiftKey&&document.activeElement===last){e.preventDefault();first.focus();}}};window.addEventListener('keydown',key);return()=>{document.body.style.overflow='';window.removeEventListener('keydown',key);previous?.focus();};},[film]);
   if(new URLSearchParams(window.location.search).has('capture'))return <div style={{width:1280,height:1000,background:'#090b0a'}}><PerfumeScene capture /></div>;
   const downloadBrief=()=>{const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([filmBrief],{type:'text/plain'}));a.download='two-souls-cinematic-brief.txt';a.click();setTimeout(()=>URL.revokeObjectURL(a.href),1000);};

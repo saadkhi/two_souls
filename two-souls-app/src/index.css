@@ -160,3 +160,12 @@
   from { opacity: 0; }
   to { opacity: 1; }
 }
+/* Mobile browsers tint their toolbars (iOS Safari's floating bottom bar, the
+   status bar area) from the body's background. The shared body is cream for the
+   shop, so give it the landing green while the landing page or boot loader shows. */
+html:has(.souls-landing),
+body:has(.souls-landing),
+html:has(#boot-loader),
+body:has(#boot-loader) {
+  background-color: #101a14;
+}
