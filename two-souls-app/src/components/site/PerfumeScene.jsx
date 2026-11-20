@@ -25,14 +25,14 @@ export default function PerfumeScene({ paused = false, capture = false, scrollPr
     }
     const qualityController = createAdaptiveQuality();
     renderer.setPixelRatio(1);
-    renderer.setClearColor(0x0b100e, 1);
+    renderer.setClearColor(0x101a14, 1);
     renderer.toneMapping = THREE.ACESFilmicToneMapping;
     renderer.toneMappingExposure = 1;
     renderer.outputColorSpace = THREE.SRGBColorSpace;
     container.appendChild(renderer.domElement);
 
     const scene = new THREE.Scene();
-    scene.background = new THREE.Color(0x0b100e);
+    scene.background = new THREE.Color(0x101a14);
     const camera = new THREE.PerspectiveCamera(34, 1, .1, 60);
     camera.position.set(0, .35, 10);
     camera.lookAt(0, .35, 0);
@@ -88,7 +88,7 @@ export default function PerfumeScene({ paused = false, capture = false, scrollPr
     const backdrop = document.createElement('canvas');backdrop.width = backdrop.height = 512;
     const backdropContext = backdrop.getContext('2d');
     const glow = backdropContext.createRadialGradient(256, 256, 0, 256, 256, 256);
-    glow.addColorStop(0, '#1c2821');glow.addColorStop(.45, '#101a14');glow.addColorStop(1, '#0b100e');
+    glow.addColorStop(0, '#1c2821');glow.addColorStop(.45, '#101a14');glow.addColorStop(1, '#101a14');
     backdropContext.fillStyle = glow;backdropContext.fillRect(0, 0, 512, 512);
     const backdropTexture = new THREE.CanvasTexture(backdrop);backdropTexture.colorSpace = THREE.SRGBColorSpace;
     const backdropMesh = new THREE.Mesh(new THREE.PlaneGeometry(18, 16), new THREE.MeshBasicMaterial({ map: backdropTexture, toneMapped: false }));

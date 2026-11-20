@@ -52,7 +52,7 @@ const AuthenticatedApp = () => {
     // Match the destination background so the landing page does not flash cream first.
     const dark = window.location.pathname === '/';
     return (
-      <div className={`fixed inset-0 flex items-center justify-center ${dark ? 'bg-[#0b100e]' : 'bg-background'}`}>
+      <div className={`fixed inset-0 flex items-center justify-center ${dark ? 'bg-[#101a14]' : 'bg-background'}`}>
         <div className={`w-8 h-8 border-4 rounded-full animate-spin ${dark ? 'border-white/10 border-t-[#c5ab7e]' : 'border-slate-200 border-t-slate-800'}`}></div>
       </div>
     );

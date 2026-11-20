@@ -15,7 +15,6 @@ const chapters = [
 export default function ScrollExperience({ paused, onPause, onFilm, reduced }) {
   const section=useRef(null);
   const chapterElements=useRef([]);
-  const progressBar=useRef(null);
   const viewportProbe=useRef(null);
   const timeline=useRef({progress:0,target:0,velocity:0});
   const [active,setActive]=useState(0);
@@ -42,7 +41,6 @@ export default function ScrollExperience({ paused, onPause, onFilm, reduced }) {
         element.style.setProperty('--chapter-shift',`${reduced?0:transition.shift}px`);
       });
       const pageProgress=state.progress.toFixed(4);if(section.current.dataset.pageProgress!==pageProgress)section.current.dataset.pageProgress=pageProgress;
-      progressBar.current.style.transform=`scaleX(${state.progress})`;
       frame=requestAnimationFrame(update);
     };
     const restore=()=>{last=performance.now();scroll();};
@@ -56,12 +54,10 @@ export default function ScrollExperience({ paused, onPause, onFilm, reduced }) {
     <span id="story" className="journey-story-anchor"/>
     <span ref={viewportProbe} className="journey-viewport-probe" aria-hidden="true"/>
     <div className="centered-product" aria-label="Centered fragrance bottle"><PerfumeScene paused={paused} scrollTimeline={timeline} sprayTrigger={spray} onSprayChange={setSprayBusy}/></div>
-    <div className="journey-halo" aria-hidden="true"/>
     {chapters.map((chapter,i)=><article ref={element=>{chapterElements.current[i]=element;}} className="journey-chapter" key={chapter.eyebrow} data-chapter={i} aria-hidden={active!==i} inert={active!==i?'':undefined} style={{pointerEvents:active===i?'auto':'none'}}>
       <div className="journey-copy"><p className="souls-eyebrow">{chapter.eyebrow}</p>{i===0?<h1>{chapter.title}</h1>:<h2>{chapter.title}</h2>}<p className="journey-description">{chapter.description}</p>{chapter.cta&&<Link className="souls-primary" to={chapter.link}>{chapter.cta}<ArrowUpRight size={16}/></Link>}{chapter.spray&&<button className="souls-primary" onClick={release} disabled={sprayBusy}><Wind size={16}/> {sprayBusy?'Releasing fragrance…':'Press to spray'}</button>}{i===0&&<button className="journey-watch" onClick={onFilm}><Play size={12}/> Watch the film</button>}</div>
       <aside className="journey-note"><span className="note-rule"/><p className="souls-eyebrow">{chapter.note}</p><h3>{chapter.name}</h3><p>{chapter.detail}</p></aside>
     </article>)}
     <div className="centered-journey-controls"><span className="journey-scroll"><ArrowDown size={13}/> SCROLL TO DISCOVER</span><div className="journey-chapter-indicator" aria-label={`Chapter ${active+1} of 5`}>{chapters.map((c,i)=><span key={i} className={i===active?'current':''}>{String(i+1).padStart(2,'0')}</span>)}</div><button aria-label={paused?'Play animation':'Pause animation'} onClick={onPause}>{paused?<Play size={12}/>:<Pause size={12}/>}<span>{paused?'PLAY MOTION':'PAUSE MOTION'}</span></button></div>
-    <div className="journey-document-progress" aria-hidden="true"><span ref={progressBar}/></div>
   </section>;
 }
