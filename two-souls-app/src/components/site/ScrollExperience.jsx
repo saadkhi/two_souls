@@ -16,6 +16,7 @@ export default function ScrollExperience({ paused, onPause, onFilm, reduced }) {
   const section=useRef(null);
   const chapterElements=useRef([]);
   const progressBar=useRef(null);
+  const viewportProbe=useRef(null);
   const timeline=useRef({progress:0,target:0,velocity:0});
   const [active,setActive]=useState(0);
   const [spray,setSpray]=useState(0);
@@ -24,7 +25,9 @@ export default function ScrollExperience({ paused, onPause, onFilm, reduced }) {
     let frame=0,last=performance.now(),currentChapter=-1;
     const state=timeline.current;
     const chapterAnimation=createChapterChoreography(chapters.length);
-    const scroll=()=>{const total=document.documentElement.scrollHeight-innerHeight;state.target=clampProgress(scrollY/Math.max(1,total));};
+    // innerHeight changes while a mobile browser's toolbar slides in and out, which
+      // would make the bottle jump. The probe is the large viewport, which never moves.
+      const scroll=()=>{const viewport=viewportProbe.current?.offsetHeight||innerHeight;const total=document.documentElement.scrollHeight-viewport;state.target=clampProgress(scrollY/Math.max(1,total));};
     const update=now=>{
       const dt=(now-last)/1000;last=now;
       if(reduced){state.progress=state.target;state.velocity=0;}else advanceScroll(state,dt);
@@ -38,7 +41,7 @@ export default function ScrollExperience({ paused, onPause, onFilm, reduced }) {
         element.style.visibility=opacity>.0001?'visible':'hidden';
         element.style.setProperty('--chapter-shift',`${reduced?0:transition.shift}px`);
       });
-      section.current.dataset.pageProgress=state.progress.toFixed(4);
+      const pageProgress=state.progress.toFixed(4);if(section.current.dataset.pageProgress!==pageProgress)section.current.dataset.pageProgress=pageProgress;
       progressBar.current.style.transform=`scaleX(${state.progress})`;
       frame=requestAnimationFrame(update);
     };
@@ -51,6 +54,7 @@ export default function ScrollExperience({ paused, onPause, onFilm, reduced }) {
   const release=()=>{if(paused)onPause();setSpray(v=>v+1);};
   return <section ref={section} className={`centered-journey ${reduced?'reduced-motion':''}`} aria-label="The Noir Oud fragrance story">
     <span id="story" className="journey-story-anchor"/>
+    <span ref={viewportProbe} className="journey-viewport-probe" aria-hidden="true"/>
     <div className="centered-product" aria-label="Centered fragrance bottle"><PerfumeScene paused={paused} scrollTimeline={timeline} sprayTrigger={spray} onSprayChange={setSprayBusy}/></div>
     <div className="journey-halo" aria-hidden="true"/>
     {chapters.map((chapter,i)=><article ref={element=>{chapterElements.current[i]=element;}} className="journey-chapter" key={chapter.eyebrow} data-chapter={i} aria-hidden={active!==i} inert={active!==i?'':undefined} style={{pointerEvents:active===i?'auto':'none'}}>

@@ -20,6 +20,7 @@ export default function PerfumeScene({ paused = false, capture = false, scrollPr
       renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true, preserveDrawingBuffer: capture, powerPreference: 'high-performance' });
     } catch {
       container.dataset.renderer = 'fallback';
+      window.dispatchEvent(new Event('perfume-scene-ready'));
       return;
     }
     const qualityController = createAdaptiveQuality();
@@ -66,7 +67,9 @@ export default function PerfumeScene({ paused = false, capture = false, scrollPr
       const next = pmrem.fromEquirectangular(texture);
       scene.environment = next.texture;scene.environmentRotation.set(0, 1.1, 0);
       studio.dispose();studio = next;texture.dispose();container.dataset.environment = 'studio-hdri';
-    }, undefined, () => { if (!disposed) container.dataset.environment = 'studio-softboxes'; });
+      // Lets the boot loader reveal the bottle already in its final studio lighting.
+      window.dispatchEvent(new Event('perfume-scene-ready'));
+    }, undefined, () => { if (!disposed) { container.dataset.environment = 'studio-softboxes';window.dispatchEvent(new Event('perfume-scene-ready')); } });
     scene.add(new THREE.HemisphereLight(0xfff8e9, 0x17221b, .22));
     const key = new THREE.DirectionalLight(0xfff5df, 2.2);key.position.set(-3, 4, 5);scene.add(key);
     const fill = new THREE.DirectionalLight(0xdce8e4, .45);fill.position.set(4, 1, 4);scene.add(fill);
@@ -116,20 +119,30 @@ export default function PerfumeScene({ paused = false, capture = false, scrollPr
     let frame, last = performance.now(), time = 0, wall = 0, displayProgress = 0;
     let wasPaused = controls.current.paused, resuming = false;
     const resumeState = { progress: 0, target: 0, velocity: 0 };
-    const resize = () => {
+    // Writing an unchanged data attribute still invalidates style, so skip repeats.
+    const setData = (key, value) => { if (container.dataset[key] !== value) container.dataset[key] = value; };
+    let drawNow = null, sizeKey = '';
+    const resize = (redraw = true) => {
       const { width, height } = container.getBoundingClientRect();
       const quality = getRenderQuality({ width, height, devicePixelRatio: window.devicePixelRatio, maxTextureSize: renderer.capabilities.maxTextureSize, deviceMemory: navigator.deviceMemory ?? 8, capture, multiplier: qualityController.multiplier });
+      // Resizing a canvas clears it. ResizeObserver runs after requestAnimationFrame
+      // and just before paint, so an unchanged size must be a no-op and a real change
+      // must repaint immediately, or one blank frame flashes on screen.
+      const key = `${Math.round(width)}x${Math.round(height)}@${quality.pixelRatio.toFixed(3)}`;
+      if (key === sizeKey) return;
+      sizeKey = key;
       renderer.setPixelRatio(quality.pixelRatio);
       renderer.setSize(Math.max(1, width), Math.max(1, height));
       opticalRenderer.resize(quality.refractionWidth, quality.refractionHeight);
-      container.dataset.renderResolution = `${quality.drawingWidth}x${quality.drawingHeight}`;
-      container.dataset.pixelRatio = quality.pixelRatio.toFixed(2);
+      setData('renderResolution', `${quality.drawingWidth}x${quality.drawingHeight}`);
+      setData('pixelRatio', quality.pixelRatio.toFixed(2));
       camera.aspect = width / Math.max(1, height);
       // Keep the complete flacon in a narrow frame, including its side view.
       camera.position.z = camera.aspect < .65 ? 10.8 : 10;
       camera.updateProjectionMatrix();
+      if (redraw) drawNow?.();
     };
-    resize();const observer = new ResizeObserver(resize);observer.observe(container);
+    resize();const observer = new ResizeObserver(() => resize());observer.observe(container);
     const restore = () => { last = performance.now();qualityController.resetTiming(); };
     document.addEventListener('visibilitychange', restore);
 
@@ -190,13 +203,13 @@ export default function PerfumeScene({ paused = false, capture = false, scrollPr
         mist.geometry.attributes.position.needsUpdate = true;droplets.geometry.attributes.position.needsUpdate = true;
       }
       mist.points.visible = droplets.points.visible = spraying;
-      container.dataset.progress = p.toFixed(4);
-      container.dataset.twistDegrees = THREE.MathUtils.radToDeg(pose.yaw).toFixed(2);
-      container.dataset.capLift = lift.toFixed(3);
-      container.dataset.pumpPress = press.toFixed(3);
-      container.dataset.sprayOpacity = mist.material.opacity.toFixed(3);
-      container.dataset.liquidSlosh = Math.hypot(liquid.slopeX, liquid.slopeZ).toFixed(4);
-      container.dataset.liquidRipple = liquid.ripple.toFixed(4);
+      setData('progress', p.toFixed(4));
+      setData('twistDegrees', THREE.MathUtils.radToDeg(pose.yaw).toFixed(2));
+      setData('capLift', lift.toFixed(3));
+      setData('pumpPress', press.toFixed(3));
+      setData('sprayOpacity', mist.material.opacity.toFixed(3));
+      setData('liquidSlosh', Math.hypot(liquid.slopeX, liquid.slopeZ).toFixed(4));
+      setData('liquidRipple', liquid.ripple.toFixed(4));
       opticalRenderer.render();
     };
     const loop = now => {
@@ -204,7 +217,7 @@ export default function PerfumeScene({ paused = false, capture = false, scrollPr
       const frameTime = now - last;
       const dt = document.hidden ? 0 : Math.max(0, Math.min(frameTime / 1000, .05));last = now;
       const state = controls.current;
-      if (!capture && !document.hidden && !state.paused && qualityController.observe(frameTime)) resize();
+      if (!capture && !document.hidden && !state.paused && qualityController.observe(frameTime)) resize(false);
       if (!state.paused) {
         wall += dt;time += dt;
         const target = state.scrollTimeline?.current.progress ?? state.scrollProgress ?? 0;
@@ -214,7 +227,7 @@ export default function PerfumeScene({ paused = false, capture = false, scrollPr
       }
       wasPaused = state.paused;draw(time, state.paused ? 0 : dt);
     };
-    draw(0);container.dataset.renderer = 'three';container.dataset.animationEngine = 'animejs';
+    draw(0);drawNow = () => draw(time, 0);container.dataset.renderer = 'three';container.dataset.animationEngine = 'animejs';
     frame = requestAnimationFrame(loop);
     if (capture) window.renderPerfumeFrame = t => { draw(t);return renderer.domElement.toDataURL('image/png'); };
     return () => {

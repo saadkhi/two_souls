@@ -7,6 +7,8 @@ import { AuthProvider, useAuth } from '@/lib/AuthContext';
 import UserNotRegisteredError from '@/components/UserNotRegisteredError';
 import ScrollToTop from './components/ScrollToTop';
 import ProtectedRoute from '@/components/ProtectedRoute';
+import { markBootStep } from '@/lib/bootLoader';
+import { useEffect } from 'react';
 import SiteLayout from '@/components/site/SiteLayout';
 import Home from '@/pages/Home';
 import Login from '@/pages/Login';
@@ -40,13 +42,18 @@ import AdminSettings from '@/pages/admin/AdminSettings';
 // Add page imports here
 
 const AuthenticatedApp = () => {
-  const { isLoadingAuth, isLoadingPublicSettings, authError, navigateToLogin } = useAuth();
+  const { isLoadingAuth, isLoadingPublicSettings, authChecked, authError, navigateToLogin } = useAuth();
+  useEffect(() => { if (authChecked) markBootStep('session'); }, [authChecked]);
 
   // Show loading spinner while checking app public settings or auth
-  if (isLoadingPublicSettings || isLoadingAuth) {
+  // Only block on the first check. Re-checking later must not unmount the page,
+  // which would tear down and rebuild the WebGL scene.
+  if (!authChecked && (isLoadingPublicSettings || isLoadingAuth)) {
+    // Match the destination background so the landing page does not flash cream first.
+    const dark = window.location.pathname === '/';
     return (
-      <div className="fixed inset-0 flex items-center justify-center">
-        <div className="w-8 h-8 border-4 border-slate-200 border-t-slate-800 rounded-full animate-spin"></div>
+      <div className={`fixed inset-0 flex items-center justify-center ${dark ? 'bg-[#0b100e]' : 'bg-background'}`}>
+        <div className={`w-8 h-8 border-4 rounded-full animate-spin ${dark ? 'border-white/10 border-t-[#c5ab7e]' : 'border-slate-200 border-t-slate-800'}`}></div>
       </div>
     );
   }
